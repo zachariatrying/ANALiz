@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+mplfinance
+tvdatafeed
+openpyxl
+scipy
+plotly
+pyarrow
+yfinance
