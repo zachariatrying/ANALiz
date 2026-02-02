@@ -7,13 +7,13 @@ from scipy.signal import argrelextrema
 
 # --- 1. AYARLAR ---
 st.set_page_config(
-    page_title="ZACHAİRA V19", 
+    page_title="ZACHAİRA MOBILE", 
     page_icon="🦅", 
     layout="wide", 
     initial_sidebar_state="expanded" 
 )
 
-# Mobil CSS (Expander Başlıklarını Büyüt)
+# Mobil CSS
 st.markdown("""
 <style>
     .stApp { background-color: transparent; }
@@ -84,7 +84,7 @@ def grafik_ciz(df, hisse, veri):
     # 2. SMA
     fig.add_trace(go.Scatter(x=df.index, y=df['SMA20'], line=dict(color='orange', width=1), name='SMA20'))
 
-    # 3. KANAL & DESTEK/DİRENÇ (EĞER VARSA)
+    # 3. KANAL & DESTEK/DİRENÇ
     if 'Tech' in veri:
         # Kanal
         fig.add_trace(go.Scatter(x=df.index, y=veri['Tech']['Upper'], line=dict(color='gray', width=1, dash='dash'), name='Kanal Üst', visible='legendonly'))
@@ -109,7 +109,6 @@ def grafik_ciz(df, hisse, veri):
         name='Formasyon Noktaları'
     ))
     
-    # Zoom özelliğini aç (Mobilde rahat kullanım için)
     fig.update_layout(xaxis_rangeslider_visible=False)
     
     return fig
@@ -189,10 +188,84 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi):
     return None
 
 # --- 6. ARAYÜZ ---
-st.title("🦅 ZACHAİRA V19")
+st.title("🦅 ZACHAİRA MOBILE V19")
 
 with st.sidebar:
     st.header("KONTROL PANELİ")
+    
+    # ------------------ DÜZELTİLEN KISIM BURASI ------------------
     zaman_secimi = st.selectbox("Periyot:", ["GÜNLÜK (1D)", "HAFTALIK (1W)", "AYLIK (1M)"])
     if "GÜNLÜK" in zaman_secimi: yf_int, yf_per, z_etiket = "1d", "2y", "GÜNLÜK"
-    elif "HAFTALIK" in zaman_secimi: yf_int, yf_per, z_etiket = "
+    elif "HAFTALIK" in zaman_secimi: yf_int, yf_per, z_etiket = "1wk", "5y", "HAFTALIK"
+    else: yf_int, yf_per, z_etiket = "1mo", "max", "AYLIK"
+    # -------------------------------------------------------------
+
+    liste_modu = st.radio("Liste:", ["FAVORİLERİM", "TÜM HİSSELER", "BIST 30"])
+    if liste_modu == "FAVORİLERİM":
+        if 'fav_hisseler' not in st.session_state: st.session_state.fav_hisseler = "THYAO, GARAN, ASELS, AKBNK"
+        user_list = st.text_area("Hisseler:", value=st.session_state.fav_hisseler)
+        st.session_state.fav_hisseler = user_list
+        hisseler = [h.strip() for h in user_list.split(',')]
+    elif liste_modu == "TÜM HİSSELER":
+        hisseler = [h.strip() for h in TUM_HISSELER_STR.replace('\n', '').split(',') if len(h) > 1]
+    else:
+        hisseler = "AKBNK,ARCLK,ASELS,ASTOR,BIMAS,BRSAN,EKGYO,ENKAI,EREGL,FROTO,GARAN,GUBRF,HEKTS,ISCTR,KCHOL,KONTR,KOZAL,KRDMD,ODAS,OYAKC,PETKM,PGSUS,SAHOL,SASA,SISE,TCELL,THYAO,TOASO,TUPRS,YKBNK".split(',')
+
+    secilen_formasyonlar = st.multiselect("Formasyon", ["Boğa Bayrak", "High Tight Flag 🚀", "Fincan Kulp"], default=["Boğa Bayrak", "High Tight Flag 🚀"])
+    bar_sayisi = st.slider("Grafik Derinliği", 30, 200, 100)
+    tolerans = st.slider("Tolerans", 1, 10, 3)
+    btn_baslat = st.button("🚀 BAŞLAT", type="primary")
+
+# --- 7. ÇIKTI EKRANI ---
+if btn_baslat:
+    temiz_hisseler = sorted(list(set([h.upper() for h in hisseler if len(h) > 1])))
+    st.info(f"🔍 {len(temiz_hisseler)} hisse taranıyor... [{z_etiket}]")
+    
+    bar = st.progress(0)
+    bulunanlar = []
+    
+    for i, hisse in enumerate(temiz_hisseler):
+        bar.progress((i+1)/len(temiz_hisseler))
+        df = veri_getir(hisse, bar_sayisi, yf_int, yf_per)
+        if df is not None:
+            sonuc = analiz_yap(df, secilen_formasyonlar, tolerans, z_etiket)
+            if sonuc:
+                sonuc['Hisse'] = hisse
+                bulunanlar.append(sonuc)
+    bar.empty()
+    
+    if not bulunanlar:
+        st.warning("❌ Sonuç yok.")
+    else:
+        st.success(f"🎉 {len(bulunanlar)} Fırsat!")
+        
+        tab1, tab2 = st.tabs(["🖼️ KARTLAR", "📋 TABLO"])
+        
+        with tab1:
+            for veri in bulunanlar:
+                # Expander Başlığı (Tıklanabilir Alan)
+                baslik = f"📌 {veri['Hisse']} | {veri['Formasyon']} | 🎯 Pot: %{veri['Potansiyel']:.1f}"
+                with st.expander(baslik, expanded=False): # Varsayılan kapalı olsun ki liste düzenli dursun
+                    # İNTERAKTİF GRAFİK ÇİZ
+                    df_c = veri_getir(veri['Hisse'], bar_sayisi, yf_int, yf_per)
+                    fig = grafik_ciz(df_c, veri['Hisse'], veri)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Detaylar
+                    c1, c2, c3 = st.columns(3)
+                    c1.metric("Fiyat", f"{veri['Fiyat']:.2f}")
+                    c2.metric("Hedef", f"{veri['Hedef']:.2f}")
+                    c3.metric("Skor", f"{veri['Skor']}")
+
+        with tab2:
+            df_final = pd.DataFrame(bulunanlar)
+            cols = ['Hisse', 'Fiyat', 'Formasyon', 'Periyot', 'Potansiyel', 'Hedef', 'Skor']
+            st.dataframe(
+                df_final[cols], 
+                use_container_width=True,
+                column_config={
+                    "Potansiyel": st.column_config.NumberColumn("Potansiyel %", format="%.1f%%"),
+                    "Fiyat": st.column_config.NumberColumn("Fiyat", format="%.2f"),
+                    "Hedef": st.column_config.NumberColumn("Hedef", format="%.2f")
+                }
+            )
