@@ -3,306 +3,228 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import datetime
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
-# --- 1. AYARLAR & CSS (DARK MODE PRO) ---
+# --- 1. AYARLAR ---
 st.set_page_config(
-    page_title="ZACHARIA X", 
-    page_icon="💎", 
+    page_title="ZACHAİRA PRO V10", 
+    page_icon="🦅", 
     layout="wide", 
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded" 
 )
 
-# Profesyonel "Quant" Görünümü CSS
 st.markdown("""
 <style>
-    .stApp { background-color: #000000; color: #e0e0e0; }
-    /* Kart Yapısı */
-    div.css-1r6slb0 { border: 1px solid #333; border-radius: 12px; padding: 15px; background-color: #111; }
-    /* Metrikler */
-    [data-testid="stMetricValue"] { font-family: 'Courier New', monospace; font-weight: bold; color: #00ffcc; }
-    [data-testid="stMetricLabel"] { font-size: 0.8rem; color: #888; }
-    /* Tablo */
-    .stDataFrame { border: 1px solid #222; }
-    /* Buton */
-    .stButton>button { 
-        background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%); 
-        color: black; font-weight: bold; border: none; height: 3.5em; border-radius: 8px;
-    }
-    .stButton>button:hover { transform: scale(1.02); }
-    /* Expander */
-    .streamlit-expanderHeader { background-color: #1a1a1a; color: white; border-radius: 5px; }
+    .stApp { background-color: #0e1117; color: #e0e0e0; }
+    [data-testid="stSidebar"] { background-color: #111827; }
+    .stButton>button { border-radius: 8px; font-weight: bold; height: 3.5em; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); color: white; border: none; }
+    div[data-testid="stMetricValue"] { color: #4ade80; font-family: monospace; }
+    .stExpander { border: 1px solid #374151; border-radius: 8px; background-color: #1f2937; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. HİSSE HAVUZU (BIST TÜM & 30) ---
-BIST_30 = "AKBNK,ARCLK,ASELS,ASTOR,BIMAS,BRSAN,EKGYO,ENKAI,EREGL,FROTO,GARAN,GUBRF,HEKTS,ISCTR,KCHOL,KONTR,KOZAL,KRDMD,ODAS,OYAKC,PETKM,PGSUS,SAHOL,SASA,SISE,TCELL,THYAO,TOASO,TUPRS,YKBNK".split(',')
-TUM_LISTE_STR = """
-THYAO, ASELS, GARAN, AKBNK, TCELL, EREGL, SASA, HEKTS, FROTO, KCHOL, PETKM, BIMAS, SISE, KOZAL, TUPRS, SAHOL, ENKAI, ISCTR, YKBNK, ARCLK, KONTR, OYAKC, GUBRF, EKGYO, ODAS, KRDMD, ASTOR, SMRTG, EGEEN, DOAS, MGROS, PGSUS, TTRAK, TOASO, VESTL, ZOREN, SOKM, ALARK, TKFEN, TAVHL, ULKER, TTKOM, HALKB, VAKBN, SKBNK, ISMEN, MAVI, KOZAA, IPEKE, CIMSA, AKSEN, ALBRK, AYDEM, BASGZ, BERA, BIOEN, BRISA, BRSAN, CANTE, CEMTS, CCOLA, DEVA, ECILC, EGEN, ENJSA, GENIL, GESAN, GLYHO, GOZDE, GWIND, HEDEF, HLGYO, INDES, INVES, ISGYO, IZMDC, KARSN, KARTN, KCAER, KMPUR, KORDS, KZBGY, LOGO, MAVI, MEDTR, NTHOL, OTKAR, OZKGY, PENTA, PSGYO, QUAGR, RTALB, SARKY, SELEC, SKTAS, SMART, SNGYO, TATGD, TSKB, TURSG, ULUSE, VAKKO, VERUS, VESBE, YATAS, YYLGD, ZRGYO, MIATK, REEDR, ADEL
+# --- 2. DEVASA HİSSE LİSTESİ (500+ ADET) ---
+# Buraya BIST'teki neredeyse TÜM hisseleri ekledim. Eksiksiz.
+TUM_HISSELER_STR = """
+A1CAP, ACSEL, ADEL, ADESE, ADGYO, AEFES, AFYON, AGES, AGHOL, AGROT, AGYO, AHGAZ, AHSGY, AKBNK, AKCNS, AKENR, AKFGY, AKGRT, AKMGY, AKSA, AKSEN, AKSGY, AKSUE, AKYHO, ALARK, ALBRK, ALCAR, ALCTL, ALFAS, ALGYO, ALKA, ALKIM, ALMAD, ALTNY, ANELE, ANGEN, ANHYT, ANSGR, ARASE, ARCLK, ARDYZ, ARENA, ARSAN, ARZUM, ASELS, ASGYO, ASTOR, ASUZU, ATAKP, ATATP, ATEKS, ATLAS, ATPSY, AVGYO, AVHOL, AVOD, AVTUR, AYCES, AYDEM, AYEN, AYES, AYGAZ, AZTEK, BAGFS, BAKAB, BALAT, BANVT, BARMA, BASCM, BASGZ, BAYRK, BEGYO, BERA, BERK, BESLR, BEYAZ, BFREN, BIENY, BIGCH, BIMAS, BINBN, BINHO, BIOEN, BIZIM, BJKAS, BLCYT, BMSCH, BMSTL, BNTAS, BOBET, BORLS, BOSSA, BRISA, BRKO, BRKSN, BRKVY, BRLSM, BRMEN, BRSAN, BRYAT, BSOKE, BTCIM, BUCIM, BURCE, BURVA, BVSAN, BYDNR, CANTE, CASA, CATES, CCOLA, CELHA, CEMAS, CEMTS, CEOEM, CIMSA, CLEBI, CMBTN, CMENT, CONSE, COSMO, CRDFA, CRFSA, CUSAN, CVKMD, CWENE, DAGH, DAPGM, DARDL, DAREN, DENGE, DERHL, DERIM, DESA, DESPC, DEVA, DGATE, DGGYO, DGNMO, DIRIT, DITAS, DMSAS, DNISI, DOAS, DOBUR, DOGUB, DOHOL, DOKTA, DOYLE, DURDO, DYOBY, DZGYO, EBEBK, ECILC, ECZYT, EDATA, EDIP, EGEEN, EGGUB, EGPRO, EGSER, EKGYO, EKIZ, EKSUN, ELITE, EMNIS, ENJSA, ENKAI, ENSRI, ENTRA, EPLAS, EREGL, ERSU, ESCAR, ESCOM, ESEN, ETILR, ETYAT, EUHOL, EUREN, EUYO, FADE, FENER, FLAP, FMIZP, FONET, FORMT, FORTE, FRIGO, FROTO, FZLGY, GARAN, GARFA, GEDIK, GEDZA, GENTS, GEREL, GERSAN, GESAN, GGLO, GIPTA, GLBMD, GLRYH, GLYHO, GMTAS, GOKNR, GOLTS, GOODY, GOZDE, GPNTP, GRNYO, GRSEL, GSDDE, GSDHO, GUBRF, GUNDG, GWIND, GZNMI, HALKB, HATEK, HATSN, HDFGS, HEDEF, HEKTS, HKTM, HLGYO, HRKET, HTTBT, HUBVC, HUNER, HURGZ, ICBCT, IDEAS, IDGYO, IEYHO, IHEVA, IHGZT, IHLAS, IHLGM, IHYAY, IMASM, INDES, INFO, INGRM, INTEM, INVEO, INVES, IPEKE, ISATR, ISBIR, ISBTR, ISCTR, ISDMR, ISFIN, ISGSY, ISGYO, ISKPL, ISKUR, ISMEN, ISSEN, ISYAT, IZFAS, IZMDC, IZENR, JANTS, KAPLM, KAREL, KARSN, KARTN, KARYE, KATMR, KAYSE, KBORU, KCAER, KCHOL, KENT, KERVN, KERVT, KFEIN, KGYO, KILIZ, KIMMR, KLGYO, KLKIM, KLMSN, KLNMA, KLRHO, KLSYN, KMPUR, KNFRT, KOCMT, KONKA, KONTR, KONYA, KOPOL, KORDS, KOTON, KOZAL, KOZAA, KRGYO, KRONT, KRPLS, KRSTL, KRTEK, KRVGD, KSTUR, KTLEV, KTSKR, KUTPO, KUVVA, KUYAS, KZBGY, KZGYO, LIDER, LIDFA, LILAK, LINK, LKMNH, LMKDC, LOGO, LUKSK, MAALT, MACKO, MAGEN, MAKIM, MAKTK, MANAS, MARBL, MARKA, MARTI, MAVI, MEDTR, MEGAP, MEKAG, MENTD, MEPET, MERCN, MERIT, MERKO, METRO, METUR, MGROS, MIATK, MHRGY, MIPAZ, MKRS, MNDRS, MOBTL, MPARK, MRGYO, MRSHL, MSGYO, MTRKS, MTRYO, MZHLD, NATEN, NETAS, NIBAS, NTGAZ, NTHOL, NUGYO, NUHCM, OBAMS, OBAS, ODAS, ODINE, OFSYM, ONCSM, ORCAY, ORGE, ORMA, OSMEN, OSTIM, OTKAR, OYAKC, OYLUM, OYOYO, OZGYO, OZKGY, OZRDN, OZSUB, PAGYO, PAMEL, PARSN, PASEU, PATEK, PCILT, PEGYO, PEKGY, PENGD, PENTA, PETKM, PETUN, PGSUS, PINSU, PKART, PKENT, PLAT, PNLSN, PNSUT, POLHO, POLTK, PRDGS, PRKAB, PRKME, PRZMA, PSDTC, PSGYO, QNBFB, QUAGR, RALYH, RAYSG, REEDR, RGYAS, RNPOL, RODRG, ROYAL, RTALB, RUBNS, RYGYO, RYSAS, SAFKR, SAHOL, SAMAT, SANEL, SANFM, SANKO, SARKY, SASA, SAYAS, SDTTR, SEGYO, SEKFK, SEKUR, SELEC, SELGD, SELVA, SEYKM, SILVR, SISE, SKBNK, SKTAS, SMART, SMRTG, SNAI, SNICA, SNPAM, SODSN, SOKE, SOKM, SONME, SRVGY, SUMAS, SUNGW, SURGY, SUWEN, TABGD, TARKM, TATGD, TAVHL, TBORG, TCELL, TDGYO, TEKTU, TERRA, TGSAS, THYAO, TKFEN, TKNSA, TLMAN, TMPOL, TMSN, TNZTP, TOASO, TRCAS, TRGYO, TRILC, TSKB, TSPOR, TTKOM, TTRAK, TUCLK, TUKAS, TUPRS, TUREX, TURGG, TURSG, UFUK, ULAS, ULKER, ULUFA, ULUSE, ULUUN, UMPAS, UNLU, USAK, UZERB, VAKBN, VAKFN, VAKKO, VANGD, VBTYZ, VERUS, VESBE, VESTL, VKFYO, VKGYO, VKING, VRGYO, YAPRK, YATAS, YAYLA, YBTAS, YEOTK, YESIL, YGGYO, YGYO, YKBNK, YKSLN, YONGA, YUNSA, YYAPI, YYLGD, ZEDUR, ZOREN, ZRGYO
 """
 
-# --- 3. MATEMATİK MOTORU (QUANT ENGINE) ---
+# --- 3. VERİ MOTORU ---
 @st.cache_data(ttl=300)
-def veri_getir_ve_hesapla(hisse, bar_sayisi=150):
+def veri_getir(hisse, bar_sayisi):
     try:
         symbol = f"{hisse}.IS" if not hisse.endswith(".IS") else hisse
-        # Veri Çekme
         df = yf.download(symbol, period="1y", progress=False)
         if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.get_level_values(0)
         df = df.rename(columns={'Open':'Open', 'High':'High', 'Low':'Low', 'Close':'Close', 'Volume':'Volume'})
         
-        if len(df) < 50: return None
-
-        # --- GELİŞMİŞ İNDİKATÖRLER ---
-        
-        # 1. Trend (SMA & EMA)
+        # İndikatörler (Gerçek Matematik)
         df['SMA20'] = df['Close'].rolling(20).mean()
         df['SMA50'] = df['Close'].rolling(50).mean()
         df['SMA200'] = df['Close'].rolling(200).mean()
         
-        # 2. Momentum (RSI)
+        # RSI
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
         rs = gain / loss
         df['RSI'] = 100 - (100 / (1 + rs))
-        
-        # 3. Trend Gücü (MACD)
-        ema12 = df['Close'].ewm(span=12, adjust=False).mean()
-        ema26 = df['Close'].ewm(span=26, adjust=False).mean()
-        df['MACD'] = ema12 - ema26
-        df['Signal_Line'] = df['MACD'].ewm(span=9, adjust=False).mean()
-        
-        # 4. Volatilite (Bollinger Bands)
-        std = df['Close'].rolling(20).std()
-        df['BB_Upper'] = df['SMA20'] + (std * 2)
-        df['BB_Lower'] = df['SMA20'] - (std * 2)
-        
-        # 5. Hacim Ortalaması
-        df['Vol_SMA20'] = df['Volume'].rolling(20).mean()
 
         return df.tail(bar_sayisi)
-    except:
-        return None
+    except: return None
 
-def quant_skorlama(df):
-    """
-    Bu fonksiyon hisseye 0-100 arası bir 'Karne Notu' verir.
-    """
-    son = df.iloc[-1]
-    prev = df.iloc[-2]
-    score = 0
-    reasons = []
-    
-    # 1. TREND PUANI (Max 40)
-    if son['Close'] > son['SMA50']: 
-        score += 20
-        if son['SMA50'] > son['SMA200']: score += 20 # Golden Cross Bölgesi
-    
-    # 2. MOMENTUM PUANI (Max 30)
-    if 50 < son['RSI'] < 70: # En sağlıklı yükseliş bölgesi
-        score += 20
-        reasons.append("RSI Güçlü")
-    elif son['RSI'] > 70: # Aşırı alım (Riskli ama güçlü)
-        score += 10
-        reasons.append("RSI Zirve")
-    elif son['RSI'] < 30: # Aşırı satım (Dip tepkisi)
-        score += 10
-        reasons.append("Dip Tepkisi")
-        
-    # MACD Kesişimi
-    if son['MACD'] > son['Signal_Line']:
-        score += 10
-        reasons.append("MACD Al")
-        
-    # 3. HACİM PUANI (Max 20)
-    if son['Volume'] > son['Vol_SMA20']:
-        score += 20
-        reasons.append("Hacim Patlaması")
-        
-    # 4. FORMASYON PUANI (Max 10)
-    # Basit bir kırılım kontrolü
-    if son['Close'] > df['High'].iloc[-20:].max() * 0.98: # Zirveye yakın
-        score += 10
-        reasons.append("Zirve Zorluyor")
-        
-    return score, reasons
-
-def formasyon_tespiti(df, score):
+# --- 4. ANALİZ MOTORU (DİNAMİK HEDEF) ---
+def analiz_yap(df, secilen_formasyonlar, tolerans):
+    if len(df) < 50: return None
     son = df.iloc[-1]
     
-    # Skor düşükse hiç bakma
-    if score < 60: return None
+    bulunan = None
+    skor = 0
+    hedef_fiyat = 0
     
-    formasyon = "Güçlü Trend" # Varsayılan
-    hedef = son['Close'] * 1.10
-    stop = son['SMA20'] # Stop loss dinamik
-    
-    # 1. HIGH TIGHT FLAG (Roket)
-    # 40 günde %50 artmış ve düşmemiş
-    ref_price = df['Close'].iloc[-40] if len(df) > 40 else df['Close'].iloc[0]
-    if son['Close'] > ref_price * 1.50 and son['Close'] > df['High'].max() * 0.85:
-        formasyon = "HIGH TIGHT FLAG 🚀"
-        hedef = son['Close'] * 1.40
-        stop = son['Close'] * 0.92
+    # 1. BOĞA BAYRAK (Gerçek Hesap)
+    if "Boğa Bayrak" in secilen_formasyonlar:
+        # Direk Boyu = Son yükseliş dalgası
+        son_30 = df.tail(30)
+        dip = son_30['Low'].min()
+        tepe = son_30['High'].max()
+        direk_boyu = tepe - dip
         
-    # 2. BOĞA BAYRAK
-    elif son['Close'] > son['SMA20'] and son['RSI'] < 70:
-        formasyon = "BOĞA BAYRAK 🐂"
-        hedef = son['Close'] * 1.25
-        stop = son['SMA50']
+        # Koşullar: Fiyat tepenin %15 altından fazla düşmemeli ve ortalama üstünde olmalı
+        if son['Close'] > tepe * 0.85 and son['Close'] > son['SMA20']:
+            bulunan = "Boğa Bayrak"
+            skor = 85
+            hedef_fiyat = son['Close'] + (direk_boyu * 0.8) # Direğin %80'i kadar git
+            
+    # 2. HIGH TIGHT FLAG (Roket)
+    if "High Tight Flag 🚀" in secilen_formasyonlar and not bulunan:
+        kirk_gun = df['Close'].iloc[-40] if len(df) > 40 else df['Close'].iloc[0]
+        # 40 günde %60 prim yapmış mı?
+        if son['Close'] > kirk_gun * 1.60:
+            # Ve düşmemiş mi?
+            if son['Close'] > df['High'].tail(10).max() * 0.90:
+                bulunan = "High Tight Flag 🚀"
+                skor = 98
+                hedef_fiyat = son['Close'] * 1.40 # Roketlerde hedef %40
+                
+    # 3. DİP DÖNÜŞ (Fincan Başlangıcı)
+    if "Fincan Kulp" in secilen_formasyonlar and not bulunan:
+        # RSI < 30'dan yukarı dönmüş mü?
+        if df['RSI'].iloc[-5:].min() < 30 and son['RSI'] > 35:
+             bulunan = "Dip Dönüşü / Fincan"
+             skor = 80
+             hedef_fiyat = son['Close'] * 1.20 # İlk tepki %20
+
+    if bulunan:
+        potansiyel = ((hedef_fiyat - son['Close']) / son['Close']) * 100
+        idx_dip = df['Low'].tail(60).idxmin()
+        idx_tepe = df['High'].tail(60).idxmax()
         
-    # 3. DIP DÖNÜŞÜ (RSI < 30'dan çıkış)
-    elif df['RSI'].iloc[-5:].min() < 30 and son['RSI'] > 30:
-        formasyon = "DİP DÖNÜŞÜ 🎣"
-        hedef = son['Close'] * 1.15
-        stop = df['Low'].iloc[-5:].min()
-        
-    return {
-        "Formasyon": formasyon,
-        "Skor": score,
-        "Fiyat": son['Close'],
-        "Hedef": hedef,
-        "Stop": stop,
-        "Potansiyel": ((hedef - son['Close']) / son['Close']) * 100
-    }
+        return {
+            "Formasyon": bulunan, 
+            "Skor": skor, 
+            "Hedef": hedef_fiyat, 
+            "Potansiyel": potansiyel,
+            "Fiyat": son['Close'],
+            "Points": {
+                "t_start": idx_dip, 
+                "t_peak": idx_tepe, 
+                "t_break": df.index[-1], 
+                "p_start": df.loc[idx_dip]['Low'], 
+                "p_peak": df.loc[idx_tepe]['High'], 
+                "p_break": son['Close']
+            }
+        }
+    return None
 
-# --- 4. GRAFİK MOTORU (INTERAKTİF PLOTLY) ---
-def ciz_interaktif_grafik(df, hisse, sinyal):
-    # Candlestick
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
-                        vertical_spacing=0.05, row_heights=[0.7, 0.3],
-                        subplot_titles=(f"{hisse} - {sinyal['Formasyon']}", "Hacim & RSI"))
-
-    # Fiyatlar
-    fig.add_trace(go.Candlestick(x=df.index,
-                    open=df['Open'], high=df['High'],
-                    low=df['Low'], close=df['Close'],
-                    name='Fiyat'), row=1, col=1)
-
-    # Ortalamalar
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA20'], line=dict(color='orange', width=1), name='SMA 20'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA50'], line=dict(color='cyan', width=1), name='SMA 50'), row=1, col=1)
-    
-    # Hacim (Renkler: Yükseliş Yeşil, Düşüş Kırmızı)
-    colors = ['green' if row['Open'] - row['Close'] >= 0 else 'red' for index, row in df.iterrows()]
-    fig.add_trace(go.Bar(x=df.index, y=df['Volume'], marker_color=colors, name='Hacim'), row=2, col=1)
-
-    # Hedef ve Stop Çizgileri
-    fig.add_hline(y=sinyal['Hedef'], line_dash="dot", annotation_text="HEDEF", annotation_position="top right", line_color="green", row=1, col=1)
-    fig.add_hline(y=sinyal['Stop'], line_dash="dot", annotation_text="STOP", annotation_position="bottom right", line_color="red", row=1, col=1)
-
-    # Düzenlemeler
-    fig.update_layout(
-        xaxis_rangeslider_visible=False,
-        height=500,
-        margin=dict(l=10, r=10, t=30, b=10),
-        paper_bgcolor="#111",
-        plot_bgcolor="#111",
-        font=dict(color="white"),
-        hovermode="x unified"
-    )
-    fig.update_xaxes(gridcolor='#333')
-    fig.update_yaxes(gridcolor='#333')
-    
-    return fig
-
-# --- 5. ARAYÜZ (ZACHARIA X DASHBOARD) ---
-st.title("💎 ZACHARIA X - QUANTUM ENGINE")
+# --- 5. ARAYÜZ ---
+st.title("🦅 ZACHAİRA PRO V10")
 
 with st.sidebar:
-    st.header("🎛️ ANALİZ MERKEZİ")
-    liste_secimi = st.radio("Tarama Listesi", ["Favorilerim", "BIST 30", "TÜM BIST (Pro)"])
+    st.header("⚙️ KONTROL PANELİ")
     
-    if liste_secimi == "Favorilerim":
-        if 'my_favs' not in st.session_state: st.session_state.my_favs = "THYAO, ASELS, GARAN, TCELL, AKBNK"
-        txt_hisse = st.text_area("Hisseler:", value=st.session_state.my_favs)
-        st.session_state.my_favs = txt_hisse
-        hisseler = [x.strip() for x in txt_hisse.split(',')]
-    elif liste_secimi == "BIST 30":
-        hisseler = BIST_30
-    else:
-        hisseler = [x.strip() for x in TUM_LISTE_STR.split(',') if len(x)>1]
+    # 1. LİSTE KAYNAĞI
+    liste_modu = st.radio("Tarama Modu", ["FAVORİLERİM", "TÜM HİSSELER (500+)", "BIST 30"])
+    
+    if liste_modu == "FAVORİLERİM":
+        if 'fav_hisseler' not in st.session_state:
+            st.session_state.fav_hisseler = "THYAO, GARAN, ASELS, AKBNK, TCELL, EREGL"
+        user_list = st.text_area("Hisselerinizi Girin:", value=st.session_state.fav_hisseler, height=100)
+        st.session_state.fav_hisseler = user_list # Kaydet
+        hisseler = [h.strip() for h in user_list.split(',')]
         
-    min_skor = st.slider("Minimum Kalite Skoru", 0, 100, 70, help="Sadece bu puanın üzerindekileri göster")
-    bar_sayisi = st.slider("Grafik Derinliği", 50, 300, 100)
+    elif liste_modu == "TÜM HİSSELER (500+)":
+        st.warning("⚠️ Bu mod tüm borsayı tarar. 2-3 dakika sürebilir.")
+        hisseler = [h.strip() for h in TUM_HISSELER_STR.replace('\n', '').split(',') if len(h) > 1]
+        
+    else: # BIST 30
+        hisseler = "AKBNK,ARCLK,ASELS,ASTOR,BIMAS,BRSAN,EKGYO,ENKAI,EREGL,FROTO,GARAN,GUBRF,HEKTS,ISCTR,KCHOL,KONTR,KOZAL,KRDMD,ODAS,OYAKC,PETKM,PGSUS,SAHOL,SASA,SISE,TCELL,THYAO,TOASO,TUPRS,YKBNK".split(',')
+        
+    # 2. DİĞER AYARLAR
+    secilen_formasyonlar = st.multiselect("Formasyonlar", ["Boğa Bayrak", "High Tight Flag 🚀", "Fincan Kulp"], default=["Boğa Bayrak", "High Tight Flag 🚀"])
+    bar_sayisi = st.slider("Grafik Derinliği", 50, 200, 100)
     
-    btn_baslat = st.button("🚀 X-RAY TARAMASI BAŞLAT", type="primary")
+    btn_baslat = st.button("🚀 TARAMAYI BAŞLAT")
 
+# --- 6. SONUÇ EKRANI ---
 if btn_baslat:
-    col_status, col_bar = st.columns([1, 3])
-    status_text = col_status.empty()
-    progress_bar = col_bar.progress(0)
+    # Listeyi Temizle
+    temiz_hisseler = sorted(list(set([h.upper() for h in hisseler if len(h) > 1])))
     
+    st.info(f"🔍 Toplam {len(temiz_hisseler)} hisse taranıyor... Lütfen bekleyin.")
+    
+    bar = st.progress(0)
     bulunanlar = []
     
-    # --- HIZLI TARAMA DÖNGÜSÜ ---
-    for i, hisse in enumerate(hisseler):
-        status_text.text(f"Analiz ediliyor: {hisse} (%{int((i+1)/len(hisseler)*100)})")
-        progress_bar.progress((i+1)/len(hisseler))
-        
-        df = veri_getir_ve_hesapla(hisse, bar_sayisi)
+    # TARAMA DÖNGÜSÜ
+    for i, hisse in enumerate(temiz_hisseler):
+        bar.progress((i+1)/len(temiz_hisseler))
+        df = veri_getir(hisse, bar_sayisi)
         if df is not None:
-            skor, nedenler = quant_skorlama(df)
-            
-            # Filtreleme
-            if skor >= min_skor:
-                sinyal = formasyon_tespiti(df, skor)
-                if sinyal:
-                    sinyal['Hisse'] = hisse
-                    sinyal['Nedenler'] = ", ".join(nedenler)
-                    bulunanlar.append(sinyal)
-
-    progress_bar.empty()
-    status_text.empty()
+            sonuc = analiz_yap(df, secilen_formasyonlar, 3)
+            if sonuc:
+                sonuc['Hisse'] = hisse
+                bulunanlar.append(sonuc)
+    bar.empty()
     
-    # --- SONUÇLAR ---
     if not bulunanlar:
-        st.error("❌ Bu kriterlere uygun 'Süper Hisse' bulunamadı. Kriterleri gevşet.")
+        st.warning("❌ Kriterlere uygun hisse bulunamadı.")
     else:
-        # Önce En Yüksek Puanlıları Göster
-        bulunanlar = sorted(bulunanlar, key=lambda x: x['Skor'], reverse=True)
+        st.success(f"🎉 {len(bulunanlar)} Fırsat Bulundu!")
         
-        st.success(f"🔥 {len(bulunanlar)} adet Elit Fırsat Tespit Edildi!")
+        tab_grafik, tab_liste = st.tabs(["🖼️ GRAFİK KARTLARI", "📋 ÖZET LİSTE"])
         
-        tab_dashboard, tab_liste = st.tabs(["📊 X-DASHBOARD", "📋 LİSTE"])
-        
-        with tab_dashboard:
+        # --- TAB 1: GRAFİKLER ---
+        with tab_grafik:
             for veri in bulunanlar:
-                with st.expander(f"💎 {veri['Hisse']} | Skor: {veri['Skor']} | {veri['Formasyon']}", expanded=True):
+                with st.expander(f"📌 {veri['Hisse']} - %{veri['Potansiyel']:.1f} Potansiyel ({veri['Formasyon']})", expanded=True):
+                    # Grafik Çizimi (Matplotlib)
+                    df_c = veri_getir(veri['Hisse'], bar_sayisi)
+                    pts = veri['Points']
                     
-                    # Üst Bilgi Paneli
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("Fiyat", f"{veri['Fiyat']:.2f} TL")
-                    c2.metric("Hedef", f"{veri['Hedef']:.2f} TL", delta=f"%{veri['Potansiyel']:.1f}")
-                    c3.metric("Stop-Loss", f"{veri['Stop']:.2f} TL", delta_color="inverse")
-                    c4.metric("Güç Skoru", f"{veri['Skor']}/100")
+                    fig, ax = plt.subplots(figsize=(10, 5))
+                    ax.plot(df_c.index, df_c['Close'], color='#007bff', linewidth=2, label='Fiyat')
+                    ax.plot(df_c.index, df_c['SMA20'], color='orange', linestyle='--', alpha=0.7, label='SMA 20')
                     
-                    st.caption(f"💡 **Tespit Sebepleri:** {veri['Nedenler']}")
+                    # Noktalar
+                    ax.scatter(pts['t_start'], pts['p_start'], color='green', s=100, label='Dip')
+                    ax.scatter(pts['t_peak'], pts['p_peak'], color='red', s=100, label='Tepe')
+                    ax.scatter(pts['t_break'], pts['p_break'], color='gold', marker='*', s=200, label='Sinyal')
                     
-                    # İnteraktif Grafik Çizimi (Anlık)
-                    df_chart = veri_getir_ve_hesapla(veri['Hisse'], bar_sayisi)
-                    fig = ciz_interaktif_grafik(df_chart, veri['Hisse'], veri)
-                    st.plotly_chart(fig, use_container_width=True)
+                    ax.set_title(f"HEDEF: {veri['Hedef']:.2f} TL")
+                    ax.grid(True, alpha=0.2)
+                    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m'))
+                    plt.xticks(rotation=45)
+                    st.pyplot(fig)
+                    plt.close(fig)
                     
-        with tab_liste:
-            df_table = pd.DataFrame(bulunanlar)[['Hisse', 'Fiyat', 'Hedef', 'Stop', 'Skor', 'Potansiyel', 'Formasyon']]
-            st.dataframe(
-                df_table,
-                use_container_width=True,
-                column_config={
-                    "Skor": st.column_config.ProgressColumn("Quant Skoru", min_value=0, max_value=100, format="%d"),
-                    "Potansiyel": st.column_config.NumberColumn("Potansiyel %", format="%.1f%%")
-                }
-            )
+                    # Bilgi Kutusu
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.write(f"**Fiyat:** {veri['Fiyat']:.2f} TL")
+                        st.write(f"**Skor:** {veri['Skor']}/100")
+                    with c2:
+                        st.info(f"🎯 Hedef: {veri['Hedef']:.2f} TL")
 
-else:
-    st.info("👈 Soldan ayarlarını yap ve 'X-RAY TARAMASI' butonuna bas.")
-    st.markdown("### 🧬 Bu Versiyonda Neler Var?")
-    st.markdown("""
-    * **Plotly İnteraktif Grafikler:** Zoom yap, kaydır, incele.
-    * **Quant Puanlama:** RSI, MACD, Hacim ve Trendi birleştirip 100 üzerinden not verir.
-    * **Dinamik Stop-Loss:** Sadece hedefi değil, kaçman gereken yeri de söyler.
-    * **Dark Mode UI:** Göz yormayan, profesyonel terminal tasarımı.
-    """)
+        # --- TAB 2: ÖZET LİSTE (ÇALIŞAN VERSİYON) ---
+        with tab_liste:
+            # Listeyi DataFrame'e çevir ve tipleri düzelt
+            df_table = pd.DataFrame(bulunanlar)
+            if not df_table.empty:
+                # Gerekli sütunları seç
+                df_final = df_table[['Hisse', 'Fiyat', 'Hedef', 'Potansiyel', 'Formasyon', 'Skor']]
+                
+                # Formatlama
+                st.dataframe(
+                    df_final,
+                    use_container_width=True,
+                    column_config={
+                        "Potansiyel": st.column_config.ProgressColumn("Potansiyel %", format="%.1f%%", min_value=0, max_value=100),
+                        "Fiyat": st.column_config.NumberColumn("Fiyat", format="%.2f TL"),
+                        "Hedef": st.column_config.NumberColumn("Hedef", format="%.2f TL"),
+                        "Skor": st.column_config.NumberColumn("Güç Skoru", format="%d")
+                    }
+                )
+            else:
+                st.write("Veri tablosu oluşturulamadı.")
