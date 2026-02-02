@@ -7,13 +7,12 @@ from scipy.signal import argrelextrema
 
 # --- 1. AYARLAR ---
 st.set_page_config(
-    page_title="ZACHAİRA V23", 
+    page_title="ZACHAİRA V24", 
     page_icon="🦅", 
     layout="wide", 
     initial_sidebar_state="expanded" 
 )
 
-# Mobil CSS
 st.markdown("""
 <style>
     .stApp { background-color: transparent; }
@@ -49,9 +48,8 @@ def veri_getir(hisse, bar_sayisi, interval, period):
         
         df['SMA20'] = df['Close'].rolling(20).mean()
         df['SMA50'] = df['Close'].rolling(50).mean()
-        df['SMA200'] = df['Close'].rolling(200).mean()
         
-        # --- RSI (Güvenli Yöntem) ---
+        # RSI HESABI (DÜZELTİLDİ)
         delta = df['Close'].diff()
         up = delta.clip(lower=0)
         down = -1 * delta.clip(upper=0)
@@ -63,7 +61,7 @@ def veri_getir(hisse, bar_sayisi, interval, period):
         return df.tail(bar_sayisi)
     except: return None
 
-# --- 4. GRAFİK (PLOTLY) ---
+# --- 4. GRAFİK ---
 def grafik_ciz(df, hisse, veri):
     layout = go.Layout(
         title=dict(text=f"{hisse} - {veri['Formasyon']}", font=dict(size=18)),
@@ -80,12 +78,14 @@ def grafik_ciz(df, hisse, veri):
     fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Fiyat'))
     fig.add_trace(go.Scatter(x=df.index, y=df['SMA20'], line=dict(color='orange', width=1), name='SMA20'))
     
+    # Teknik Seviyeler
     if 'Tech' in veri:
         fig.add_trace(go.Scatter(x=df.index, y=veri['Tech']['Upper'], line=dict(color='gray', width=1, dash='dot'), name='Kanal Üst', visible='legendonly'))
         fig.add_trace(go.Scatter(x=df.index, y=veri['Tech']['Lower'], line=dict(color='gray', width=1, dash='dot'), name='Kanal Alt', visible='legendonly'))
         for res in veri['Tech']['Resistances'][-2:]: fig.add_hline(y=res, line_dash="dot", line_color="red", opacity=0.5)
         for sup in veri['Tech']['Supports'][-2:]: fig.add_hline(y=sup, line_dash="dot", line_color="green", opacity=0.5)
 
+    # HEDEF
     fig.add_hline(y=veri['Hedef'], line_color="green", line_width=2, annotation_text=f"HEDEF: {veri['Hedef']:.2f}", annotation_position="top left")
 
     if 'Points' in veri:
@@ -99,7 +99,7 @@ def grafik_ciz(df, hisse, veri):
     fig.update_layout(xaxis_rangeslider_visible=False)
     return fig
 
-# --- 5. ANALİZ MOTORU ---
+# --- 5. ANALİZ MOTORU (DÜZELTİLMİŞ MATEMATİK) ---
 def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi, tek_hisse_modu=False):
     if len(df) < 50: return None
     son = df.iloc[-1]
@@ -108,35 +108,71 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi, tek_hisse_modu
     hedef_fiyat = 0
     skor = 50 
     tol_katsayi = 1 + (tolerans * 0.01)
-    if tek_hisse_modu: tol_katsayi *= 1.15
+    if tek_hisse_modu: tol_katsayi *= 1.20 # Tolerans artırıldı
 
     # Skorlama
     if son['Close'] > son['SMA20']: skor += 10
     if son['SMA20'] > son['SMA50']: skor += 10
     if 45 < son['RSI'] < 70: skor += 20 
 
-    # 1. BOĞA BAYRAK
-    if "Boğa Bayrak" in secilen_formasyonlar:
-        son_30 = df.tail(30)
-        dip = son_30['Low'].min()
-        tepe = son_30['High'].max()
-        direk = tepe - dip
-        if son['Close'] > tepe * (0.88 / tol_katsayi) and son['Close'] > son['SMA20']:
-             bulunan = "Boğa Bayrak"
-             hedef_fiyat = son['Close'] + direk
+    # --- FORMASYON MATEMATİĞİ ---
 
-    # 2. ROKET
+    # 1. BOĞA BAYRAK (GEOMETRİK DÜZELTME)
+    if "Boğa Bayrak" in secilen_formasyonlar:
+        # Son 40 mumluk pencere
+        pencere = 40
+        son_veri = df.tail(pencere)
+        
+        # 1. Adım: Zirveyi Bul
+        idx_tepe = son_veri['High'].idxmax()
+        tepe_fiyat = son_veri.loc[idx_tepe]['High']
+        
+        # 2. Adım: SADECE Zirveden Önceki Dibi Bul (Zaman Kontrolü)
+        veri_oncesi = son_veri.loc[:idx_tepe]
+        
+        # Eğer zirve en baştaysa (yani yükseliş yoksa) iptal
+        if len(veri_oncesi) > 3:
+            idx_dip = veri_oncesi['Low'].idxmin()
+            dip_fiyat = veri_oncesi.loc[idx_dip]['Low']
+            
+            direk_boyu = tepe_fiyat - dip_fiyat
+            
+            # Direk en az %5 olmalı (Gürültü olmasın)
+            if direk_boyu > (dip_fiyat * 0.05):
+                # Bayrak Koşulu: Fiyat zirveden çok uzaklaşmamalı
+                esneklik = 0.88 / tol_katsayi
+                if son['Close'] > tepe_fiyat * esneklik and son['Close'] > son['SMA20']:
+                    bulunan = "Boğa Bayrak"
+                    # HEDEF: Kırılım Noktası + Direk Boyu
+                    # (Şu anki fiyatı kırılım kabul ediyoruz)
+                    hedef_fiyat = son['Close'] + direk_boyu
+
+    # 2. HIGH TIGHT FLAG (ROKET)
     if "High Tight Flag 🚀" in secilen_formasyonlar and not bulunan:
-        kirk_bar = df['Close'].iloc[-40] if len(df) > 40 else df['Close'].iloc[0]
-        if son['Close'] > kirk_bar * (1.60 / tol_katsayi):
-            if son['Close'] > df['High'].tail(10).max() * 0.90:
-                bulunan = "High Tight Flag 🚀"
-                skor += 20
-                hedef_fiyat = son['Close'] * 1.40
+        # Son 50 gün
+        son_50 = df.tail(50)
+        idx_zirve = son_50['High'].idxmax()
+        zirve_fiyat = son_50.loc[idx_zirve]['High']
+        
+        # Zirveden önceki dip
+        veri_oncesi = son_50.loc[:idx_zirve]
+        if len(veri_oncesi) > 5:
+            dip_fiyat = veri_oncesi['Low'].min()
+            
+            # Direk %50'den büyük mü?
+            if (zirve_fiyat - dip_fiyat) / dip_fiyat > 0.50:
+                # Fiyat zirveye yakın mı?
+                if son['Close'] > zirve_fiyat * (0.90 / tol_katsayi):
+                    bulunan = "High Tight Flag 🚀"
+                    skor += 20
+                    direk_boyu = zirve_fiyat - dip_fiyat
+                    hedef_fiyat = son['Close'] + (direk_boyu * 0.618)
 
     # 3. FİNCAN
     if "Fincan Kulp" in secilen_formasyonlar and not bulunan:
-        if df['RSI'].iloc[-10:].min() < (35 * tol_katsayi) and son['RSI'] > 40:
+        # RSI ve Fiyat yapısı
+        if df['RSI'].iloc[-10:].min() < (40 * tol_katsayi) and son['RSI'] > 45:
+             # Basit Derinlik: Son 60 günün Yükseği - Düşüğü
              derinlik = df['High'].tail(60).max() - df['Low'].tail(60).min()
              bulunan = "Fincan Kulp"
              hedef_fiyat = son['Close'] + derinlik
@@ -147,10 +183,12 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi, tek_hisse_modu
         hedef_fiyat = son['Close'] * 1.05 
         
     if bulunan:
+        # HEDEF KONTROLÜ (Saçma negatif veya aşırı hedefleri engelle)
         if hedef_fiyat <= son['Close']: hedef_fiyat = son['Close'] * 1.05
+        
         potansiyel = ((hedef_fiyat - son['Close']) / son['Close']) * 100
         
-        # Teknik
+        # Teknik Çizgiler
         n=5
         ilocs_max = argrelextrema(df['High'].values, np.greater_equal, order=n)[0]
         ilocs_min = argrelextrema(df['Low'].values, np.less_equal, order=n)[0]
@@ -163,6 +201,7 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi, tek_hisse_modu
         trend = slope * x + intercept
         std = np.std(y - trend)
         
+        # Noktaları belirle (Çizim için)
         idx_dip = df['Low'].tail(60).idxmin()
         idx_tepe = df['High'].tail(60).idxmax()
 
@@ -179,19 +218,17 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi, tek_hisse_modu
     return None
 
 # --- 6. ARAYÜZ ---
-st.title("🦅 ZACHAİRA V23")
+st.title("🦅 ZACHAİRA V24")
 
 with st.sidebar:
     st.header("KONTROL PANELİ")
     
-    # ZAMAN
     zaman_secimi = st.selectbox("Periyot:", ["GÜNLÜK (1D)", "HAFTALIK (1W)", "AYLIK (1M)", "1 SAATLİK (1h)"])
     if "GÜNLÜK" in zaman_secimi: yf_int, yf_per, z_etiket = "1d", "2y", "GÜNLÜK"
     elif "HAFTALIK" in zaman_secimi: yf_int, yf_per, z_etiket = "1wk", "5y", "HAFTALIK"
     elif "AYLIK" in zaman_secimi: yf_int, yf_per, z_etiket = "1mo", "max", "AYLIK"
     else: yf_int, yf_per, z_etiket = "60m", "730d", "1 SAAT"
 
-    # KAYNAK
     liste_modu = st.radio("Kaynak:", ["TEK HİSSE (Hızlı Analiz)", "FAVORİLERİM", "TÜM HİSSELER", "BIST 30"])
     
     tek_hisse_aktif = False
@@ -215,7 +252,7 @@ with st.sidebar:
     tolerans = st.slider("Tolerans", 1, 10, 3)
     btn_baslat = st.button("🚀 BAŞLAT", type="primary")
 
-# --- 7. ÇIKTI EKRANI ---
+# --- 7. ÇIKTI ---
 if btn_baslat:
     temiz_hisseler = sorted(list(set([h.upper() for h in hisseler if len(h) > 1])))
     st.info(f"🔍 {len(temiz_hisseler)} hisse taranıyor... [{z_etiket}]")
@@ -235,11 +272,10 @@ if btn_baslat:
     
     if not bulunanlar:
         if tek_hisse_aktif: st.error(f"❌ {temiz_hisseler[0]} bulunamadı.")
-        else: st.warning("❌ Sonuç yok. Toleransı artır.")
+        else: st.warning("❌ Sonuç yok.")
     else:
         st.success(f"🎉 {len(bulunanlar)} Sonuç!")
         
-        # 1. GRAFİKLER (KARTLAR)
         for veri in bulunanlar:
             ikon = "📊" if "Genel" in veri['Formasyon'] else "🚀"
             baslik = f"{ikon} {veri['Hisse']} | {veri['Formasyon']} | Pot: %{veri['Potansiyel']:.1f}"
@@ -253,17 +289,13 @@ if btn_baslat:
                 c2.metric("Hedef", f"{veri['Hedef']:.2f}")
                 c3.metric("Skor", f"{veri['Skor']}")
 
-        # 2. ÖZET TABLO (SABİT, TABSIZ)
         st.divider()
         st.subheader("📋 ÖZET TABLO")
         df_final = pd.DataFrame(bulunanlar)
         cols = ['Hisse', 'Fiyat', 'Formasyon', 'Periyot', 'Potansiyel', 'Hedef', 'Skor']
         
-        # Explicit DataFrame creation for safety
-        safe_df = df_final[cols].copy()
-        
         st.dataframe(
-            safe_df, 
+            df_final[cols], 
             use_container_width=True,
             column_config={
                 "Potansiyel": st.column_config.NumberColumn("Potansiyel %", format="%.1f%%"),
