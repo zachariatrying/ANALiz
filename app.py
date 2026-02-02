@@ -7,23 +7,23 @@ import matplotlib.dates as mdates
 
 # --- 1. AYARLAR ---
 st.set_page_config(
-    page_title="ZACHAİRA MOBILE V16", 
-    page_icon="📱", 
+    page_title="ZACHAİRA V17", 
+    page_icon="🦅", 
     layout="wide", 
     initial_sidebar_state="expanded" 
 )
 
-# Mobil Uyumlu Temiz CSS
+# Mobil CSS
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; }
-    .stExpander { background-color: #1f2937; border-radius: 8px; border: 1px solid #374151; }
-    div[data-testid="stMetricValue"] { color: #4ade80; font-size: 1.2rem; }
-    .stDataFrame { font-size: 0.9rem; }
+    .stExpander { background-color: #1f2937; border: 1px solid #4b5563; border-radius: 8px; }
+    div[data-testid="stMetricValue"] { color: #4ade80; font-size: 1.1rem; }
+    .stDataFrame { font-size: 0.85rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. HİSSE LİSTESİ (TÜMÜ) ---
+# --- 2. HİSSE LİSTESİ ---
 TUM_HISSELER_STR = """
 A1CAP, ACSEL, ADEL, ADESE, ADGYO, AEFES, AFYON, AGES, AGHOL, AGROT, AGYO, AHGAZ, AHSGY, AKBNK, AKCNS, AKENR, AKFGY, AKGRT, AKMGY, AKSA, AKSEN, AKSGY, AKSUE, AKYHO, ALARK, ALBRK, ALCAR, ALCTL, ALFAS, ALGYO, ALKA, ALKIM, ALMAD, ALTNY, ANELE, ANGEN, ANHYT, ANSGR, ARASE, ARCLK, ARDYZ, ARENA, ARSAN, ARZUM, ASELS, ASGYO, ASTOR, ASUZU, ATAKP, ATATP, ATEKS, ATLAS, ATPSY, AVGYO, AVHOL, AVOD, AVTUR, AYCES, AYDEM, AYEN, AYES, AYGAZ, AZTEK, BAGFS, BAKAB, BALAT, BANVT, BARMA, BASCM, BASGZ, BAYRK, BEGYO, BERA, BERK, BESLR, BEYAZ, BFREN, BIENY, BIGCH, BIMAS, BINBN, BINHO, BIOEN, BIZIM, BJKAS, BLCYT, BMSCH, BMSTL, BNTAS, BOBET, BORLS, BOSSA, BRISA, BRKO, BRKSN, BRKVY, BRLSM, BRMEN, BRSAN, BRYAT, BSOKE, BTCIM, BUCIM, BURCE, BURVA, BVSAN, BYDNR, CANTE, CASA, CATES, CCOLA, CELHA, CEMAS, CEMTS, CEOEM, CIMSA, CLEBI, CMBTN, CMENT, CONSE, COSMO, CRDFA, CRFSA, CUSAN, CVKMD, CWENE, DAGH, DAPGM, DARDL, DAREN, DENGE, DERHL, DERIM, DESA, DESPC, DEVA, DGATE, DGGYO, DGNMO, DIRIT, DITAS, DMSAS, DNISI, DOAS, DOBUR, DOGUB, DOHOL, DOKTA, DOYLE, DURDO, DYOBY, DZGYO, EBEBK, ECILC, ECZYT, EDATA, EDIP, EGEEN, EGGUB, EGPRO, EGSER, EKGYO, EKIZ, EKSUN, ELITE, EMNIS, ENJSA, ENKAI, ENSRI, ENTRA, EPLAS, EREGL, ERSU, ESCAR, ESCOM, ESEN, ETILR, ETYAT, EUHOL, EUREN, EUYO, FADE, FENER, FLAP, FMIZP, FONET, FORMT, FORTE, FRIGO, FROTO, FZLGY, GARAN, GARFA, GEDIK, GEDZA, GENTS, GEREL, GERSAN, GESAN, GGLO, GIPTA, GLBMD, GLRYH, GLYHO, GMTAS, GOKNR, GOLTS, GOODY, GOZDE, GPNTP, GRNYO, GRSEL, GSDDE, GSDHO, GUBRF, GUNDG, GWIND, GZNMI, HALKB, HATEK, HATSN, HDFGS, HEDEF, HEKTS, HKTM, HLGYO, HRKET, HTTBT, HUBVC, HUNER, HURGZ, ICBCT, IDEAS, IDGYO, IEYHO, IHEVA, IHGZT, IHLAS, IHLGM, IHYAY, IMASM, INDES, INFO, INGRM, INTEM, INVEO, INVES, IPEKE, ISATR, ISBIR, ISBTR, ISCTR, ISDMR, ISFIN, ISGSY, ISGYO, ISKPL, ISKUR, ISMEN, ISSEN, ISYAT, IZFAS, IZMDC, IZENR, JANTS, KAPLM, KAREL, KARSN, KARTN, KARYE, KATMR, KAYSE, KBORU, KCAER, KCHOL, KENT, KERVN, KERVT, KFEIN, KGYO, KILIZ, KIMMR, KLGYO, KLKIM, KLMSN, KLNMA, KLRHO, KLSYN, KMPUR, KNFRT, KOCMT, KONKA, KONTR, KONYA, KOPOL, KORDS, KOTON, KOZAL, KOZAA, KRGYO, KRONT, KRPLS, KRSTL, KRTEK, KRVGD, KSTUR, KTLEV, KTSKR, KUTPO, KUVVA, KUYAS, KZBGY, KZGYO, LIDER, LIDFA, LILAK, LINK, LKMNH, LMKDC, LOGO, LUKSK, MAALT, MACKO, MAGEN, MAKIM, MAKTK, MANAS, MARBL, MARKA, MARTI, MAVI, MEDTR, MEGAP, MEKAG, MENTD, MEPET, MERCN, MERIT, MERKO, METRO, METUR, MGROS, MIATK, MHRGY, MIPAZ, MKRS, MNDRS, MOBTL, MPARK, MRGYO, MRSHL, MSGYO, MTRKS, MTRYO, MZHLD, NATEN, NETAS, NIBAS, NTGAZ, NTHOL, NUGYO, NUHCM, OBAMS, OBAS, ODAS, ODINE, OFSYM, ONCSM, ORCAY, ORGE, ORMA, OSMEN, OSTIM, OTKAR, OYAKC, OYLUM, OYOYO, OZGYO, OZKGY, OZRDN, OZSUB, PAGYO, PAMEL, PARSN, PASEU, PATEK, PCILT, PEGYO, PEKGY, PENGD, PENTA, PETKM, PETUN, PGSUS, PINSU, PKART, PKENT, PLAT, PNLSN, PNSUT, POLHO, POLTK, PRDGS, PRKAB, PRKME, PRZMA, PSDTC, PSGYO, QNBFB, QUAGR, RALYH, RAYSG, REEDR, RGYAS, RNPOL, RODRG, ROYAL, RTALB, RUBNS, RYGYO, RYSAS, SAFKR, SAHOL, SAMAT, SANEL, SANFM, SANKO, SARKY, SASA, SAYAS, SDTTR, SEGYO, SEKFK, SEKUR, SELEC, SELGD, SELVA, SEYKM, SILVR, SISE, SKBNK, SKTAS, SMART, SMRTG, SNAI, SNICA, SNPAM, SODSN, SOKE, SOKM, SONME, SRVGY, SUMAS, SUNGW, SURGY, SUWEN, TABGD, TARKM, TATGD, TAVHL, TBORG, TCELL, TDGYO, TEKTU, TERRA, TGSAS, THYAO, TKFEN, TKNSA, TLMAN, TMPOL, TMSN, TNZTP, TOASO, TRCAS, TRGYO, TRILC, TSKB, TSPOR, TTKOM, TTRAK, TUCLK, TUKAS, TUPRS, TUREX, TURGG, TURSG, UFUK, ULAS, ULKER, ULUFA, ULUSE, ULUUN, UMPAS, UNLU, USAK, UZERB, VAKBN, VAKFN, VAKKO, VANGD, VBTYZ, VERUS, VESBE, VESTL, VKFYO, VKGYO, VKING, VRGYO, YAPRK, YATAS, YAYLA, YBTAS, YEOTK, YESIL, YGGYO, YGYO, YKBNK, YKSLN, YONGA, YUNSA, YYAPI, YYLGD, ZEDUR, ZOREN, ZRGYO
 """
@@ -40,12 +40,11 @@ def veri_getir(hisse, bar_sayisi, interval, period):
         
         if len(df) < 20: return None
         
-        # TEKNİK İNDİKATÖRLER
+        # İndikatörler
         df['SMA20'] = df['Close'].rolling(20).mean()
         df['SMA50'] = df['Close'].rolling(50).mean()
         df['SMA200'] = df['Close'].rolling(200).mean()
         
-        # RSI
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
@@ -55,31 +54,24 @@ def veri_getir(hisse, bar_sayisi, interval, period):
         return df.tail(bar_sayisi)
     except: return None
 
-# --- 4. GELİŞMİŞ SKORLAMA VE POTANSİYEL MOTORU ---
+# --- 4. ANALİZ MOTORU ---
 def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi):
     if len(df) < 50: return None
     son = df.iloc[-1]
     
     bulunan = None
     hedef_fiyat = 0
-    skor = 50 # Başlangıç Puanı
+    skor = 50 
     
-    # Tolerans
     tol_katsayi = 1 + (tolerans * 0.01)
 
-    # --- 1. SKORLAMA (PUAN TOPLAMA) ---
-    # Trend Puanı (Max 30)
+    # SKORLAMA
     if son['Close'] > son['SMA20']: skor += 10
     if son['SMA20'] > son['SMA50']: skor += 10
     if son['SMA50'] > son['SMA200']: skor += 10
-    
-    # RSI Puanı (Max 20)
-    if 50 < son['RSI'] < 70: skor += 20 # İdeal Bölge
-    elif son['RSI'] > 70: skor += 10 # Güçlü ama riskli
-    
-    # --- 2. FORMASYON VE HEDEF ---
-    
-    # A. BOĞA BAYRAK
+    if 50 < son['RSI'] < 70: skor += 20 
+
+    # 1. BOĞA BAYRAK
     if "Boğa Bayrak" in secilen_formasyonlar:
         son_30 = df.tail(30)
         dip = son_30['Low'].min()
@@ -89,10 +81,9 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi):
         esneklik = 0.85 / tol_katsayi 
         if son['Close'] > tepe * esneklik and son['Close'] > son['SMA20']:
             bulunan = "Boğa Bayrak"
-            # HEDEF HESABI: Kırılım + Direk Boyu
             hedef_fiyat = son['Close'] + direk_boyu 
             
-    # B. HIGH TIGHT FLAG
+    # 2. HIGH TIGHT FLAG
     if "High Tight Flag 🚀" in secilen_formasyonlar and not bulunan:
         kirk_bar = df['Close'].iloc[-40] if len(df) > 40 else df['Close'].iloc[0]
         prim_sarti = 1.60 / tol_katsayi
@@ -100,58 +91,45 @@ def analiz_yap(df, secilen_formasyonlar, tolerans, zaman_etiketi):
         if son['Close'] > kirk_bar * prim_sarti:
             if son['Close'] > df['High'].tail(10).max() * 0.90:
                 bulunan = "High Tight Flag 🚀"
-                skor += 15 # Roketler ekstra puan alır
-                # HEDEF HESABI: Agresif %40
+                skor += 15
                 hedef_fiyat = son['Close'] * 1.40 
 
-    # C. FİNCAN KULP
+    # 3. FİNCAN KULP
     if "Fincan Kulp" in secilen_formasyonlar and not bulunan:
-        # Derinlik Hesabı
         son_60 = df.tail(60)
-        zirve = son_60['High'].max()
-        dip_noktasi = son_60['Low'].min()
-        derinlik = zirve - dip_noktasi
-        
+        derinlik = son_60['High'].max() - son_60['Low'].min()
         if df['RSI'].iloc[-5:].min() < (30 * tol_katsayi) and son['RSI'] > 35:
-             bulunan = "Fincan Kulp / Dip Dönüş"
-             # HEDEF HESABI: Mevcut + Derinlik
+             bulunan = "Fincan Kulp"
              hedef_fiyat = son['Close'] + derinlik
 
-    # --- 3. SONUÇ ÇIKTISI ---
     if bulunan:
-        # GERÇEK POTANSİYEL YÜZDESİ
-        # Formül: ((Hedef - Güncel) / Güncel) * 100
         potansiyel = ((hedef_fiyat - son['Close']) / son['Close']) * 100
-        
-        # Grafik Noktaları
         idx_dip = df['Low'].tail(60).idxmin()
         idx_tepe = df['High'].tail(60).idxmax()
         
         return {
             "Formasyon": bulunan, 
-            "Skor": min(skor, 100), # Max 100 olsun
+            "Skor": min(skor, 100), 
             "Hedef": hedef_fiyat, 
             "Potansiyel": potansiyel, 
             "Fiyat": son['Close'],
-            "Periyot": zaman_etiketi, # İSTEDİĞİN ÖZELLİK
+            "Periyot": zaman_etiketi,
             "Points": {"t_start": idx_dip, "t_peak": idx_tepe, "t_break": df.index[-1], "p_start": df.loc[idx_dip]['Low'], "p_peak": df.loc[idx_tepe]['High'], "p_break": son['Close']}
         }
     return None
 
 # --- 5. ARAYÜZ ---
-st.title("📱 ZACHAİRA MOBILE V16")
+st.title("🦅 ZACHAİRA V17")
 
 with st.sidebar:
     st.header("KONTROL PANELİ")
     
-    # 1. ZAMAN
     st.subheader("1. Zaman Dilimi")
     zaman_secimi = st.selectbox("Periyot:", ["GÜNLÜK (1D)", "HAFTALIK (1W)", "AYLIK (1M)"])
     if "GÜNLÜK" in zaman_secimi: yf_int, yf_per, z_etiket = "1d", "2y", "GÜNLÜK"
     elif "HAFTALIK" in zaman_secimi: yf_int, yf_per, z_etiket = "1wk", "5y", "HAFTALIK"
     else: yf_int, yf_per, z_etiket = "1mo", "max", "AYLIK"
 
-    # 2. LİSTE
     st.subheader("2. Kaynak")
     liste_modu = st.radio("Seçim:", ["FAVORİLERİM", "TÜM HİSSELER", "BIST 30"])
     
@@ -165,7 +143,6 @@ with st.sidebar:
     else:
         hisseler = "AKBNK,ARCLK,ASELS,ASTOR,BIMAS,BRSAN,EKGYO,ENKAI,EREGL,FROTO,GARAN,GUBRF,HEKTS,ISCTR,KCHOL,KONTR,KOZAL,KRDMD,ODAS,OYAKC,PETKM,PGSUS,SAHOL,SASA,SISE,TCELL,THYAO,TOASO,TUPRS,YKBNK".split(',')
 
-    # 3. AYARLAR
     secilen_formasyonlar = st.multiselect("Formasyon", ["Boğa Bayrak", "High Tight Flag 🚀", "Fincan Kulp"], default=["Boğa Bayrak", "High Tight Flag 🚀"])
     bar_sayisi = st.slider("Grafik Derinliği", 30, 200, 100)
     tolerans = st.slider("Tolerans", 1, 10, 3)
@@ -184,7 +161,6 @@ if btn_baslat:
         bar.progress((i+1)/len(temiz_hisseler))
         df = veri_getir(hisse, bar_sayisi, yf_int, yf_per)
         if df is not None:
-            # Zaman Etiketini fonksiyona yolla
             sonuc = analiz_yap(df, secilen_formasyonlar, tolerans, z_etiket)
             if sonuc:
                 sonuc['Hisse'] = hisse
@@ -200,15 +176,15 @@ if btn_baslat:
         
         with tab1:
             for veri in bulunanlar:
-                with st.expander(f"📌 {veri['Hisse']} - %{veri['Potansiyel']:.1f}", expanded=True):
+                # DÜZELTME: Kart Başlığında Artık Formasyon Var
+                baslik = f"📌 {veri['Hisse']} - {veri['Formasyon']} (Pot: %{veri['Potansiyel']:.1f})"
+                with st.expander(baslik, expanded=True):
                     df_c = veri_getir(veri['Hisse'], bar_sayisi, yf_int, yf_per)
                     pts = veri['Points']
                     
                     fig, ax = plt.subplots(figsize=(10, 5))
                     ax.plot(df_c.index, df_c['Close'], color='#2563eb', linewidth=2)
                     ax.plot(df_c.index, df_c['SMA20'], color='orange', linestyle='--')
-                    
-                    # Noktalar
                     ax.scatter(pts['t_start'], pts['p_start'], color='green', s=100)
                     ax.scatter(pts['t_peak'], pts['p_peak'], color='red', s=100)
                     ax.scatter(pts['t_break'], pts['p_break'], color='gold', marker='*', s=200)
@@ -219,17 +195,17 @@ if btn_baslat:
                     st.pyplot(fig)
                     plt.close(fig)
                     
-                    # Detaylar
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Hedef", f"{veri['Hedef']:.2f}")
                     c2.metric("Skor", f"{veri['Skor']}")
                     c3.metric("Zaman", f"{veri['Periyot']}")
 
         with tab2:
-            # TABLOYA PERİYOT SÜTUNU EKLENDİ
-            df_final = pd.DataFrame(bulunanlar)[['Hisse', 'Fiyat', 'Hedef', 'Potansiyel', 'Skor', 'Periyot', 'Formasyon']]
+            # DÜZELTME: Tabloya Formasyon ve Periyot eklendi
+            df_final = pd.DataFrame(bulunanlar)
+            cols = ['Hisse', 'Fiyat', 'Formasyon', 'Periyot', 'Skor', 'Hedef', 'Potansiyel']
             st.dataframe(
-                df_final, 
+                df_final[cols], 
                 use_container_width=True,
                 column_config={
                     "Potansiyel": st.column_config.NumberColumn("Potansiyel %", format="%.1f%%"),
