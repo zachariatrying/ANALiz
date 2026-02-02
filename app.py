@@ -7,7 +7,7 @@ import matplotlib.dates as mdates
 
 # --- 1. AYARLAR ---
 st.set_page_config(
-    page_title="ZACbabaPRO V11", 
+    page_title="ZACHAİRA PRO V11", 
     page_icon="🦅", 
     layout="wide", 
     initial_sidebar_state="expanded" 
